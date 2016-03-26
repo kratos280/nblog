@@ -7,15 +7,15 @@ block content
             .dialog.login
                .contents
                   form.well(method='POST', action='/login')
-                     label USERNAME:
-                     input(type='text', name='name', value=name)
+                     label email:
+                     input(type='text', name='email', value=email)
                      label PASSWORD:
                      input(type='password', name='password')
                      .control-group
                         button.btn(type='submit', name='login') Login
-      if loginFailed
+      if message
          .row
             .span4.offset4
                .alert.alert-info
                   i.icon-exclamation-sign
-                  |  login failed.
+                  |  #{message}

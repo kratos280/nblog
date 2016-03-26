@@ -1,56 +1,86 @@
 var crypto = require('crypto');
-var database = require('./database');
-var db = database.createClient();
-var users = exports;
 
-// Auth
-users.authenticate = function (name, password, callback) {
-    var hashedPassword = _hashPassword(password);
-    db.query('SELECT * FROM users WHERE name = ? AND password = ?', [name, hashedPassword],
-    function queryCallback(err, results, fields) {
-        db.end();
-        if (err) {
-            callback(err);
-            return;
+module.exports = function (sequelize, DataTypes) {
+    var User = sequelize.define('User', {
+        id: {
+            type: DataTypes.BIGINT.UNSIGNED,
+            autoIncrement: true,
+            primaryKey: true,
+        },
+        platform_type: {
+            type: DataTypes.INTEGER(2).UNSIGNED,
+            comment: 'Facebook: 1, Twitter: 2, Google: 3',
+            defaultValue: 0,
+        },
+        platform_id: {
+            type: DataTypes.BIGINT.UNSIGNED,
+            defaultValue: 0,
+        },
+        access_token: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+        },
+        refresh_token: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+        },
+        name: DataTypes.STRING,
+        email: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        password: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        profile_image: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+        },
+        role: {
+            type: DataTypes.INTEGER(2).UNSIGNED,
+            defaultValue: 1,
+        },
+        confirmed: {
+            type: DataTypes.INTEGER(2).UNSIGNED,
+            defaultValue: 0,
         }
-        if (results && (results.length > 0)) {
-            userInfo = results[0];
-            if (userInfo.password == _hashPassword(password)) {
-                delete userInfo.password;
-                callback(null, userInfo);
-                return;
+    }, {
+        freezeTableName: true,
+        tableName: 'users',
+        timestamps: true,
+        underscored: true,
+        paranoid: true,
+        indexes: [
+            {
+                fields: ['platform_type', 'platform_id'],
+            },
+            {
+                fields: ['email', 'password'],
+            }
+        ],
+        instanceMethods: {
+
+        },
+        classMethods: {
+            hashPassword: function(password) {
+                if (password === '') {
+                    return '';
+                }
+                var shasum = crypto.createHash('sha256');
+                shasum.update(password);
+                return shasum.digest('hex');
             }
         }
-
-        // Error
-        callback(err, null);
-        return;
     });
-};
 
-function _hashPassword(password) {
-    if (password === '') {
-        return '';
-    }
-    var shasum = crypto.createHash('sha256');
-    shasum.update(password);
-    return shasum.digest('hex');
-}
+    User.PLATFORM_TYPE_FACEBOOK = 1;
+    User.PLATFORM_TYPE_TWITTER = 2;
+    User.PLATFORM_TYPE_GOOGLE = 3;
 
-users.createUser = function (name, password, callback) {
-    var hashedPassword = _hashPassword(password);
-    db.query(
-        'INSERT INTO users' + '(uid, name, password)' + 'VALUES' + '(NULL, ?, ?)' + ';',
-        [name, hashedPassword],
-        function(err, results, fields) {
-            db.end();
-            var userInfo = {
-                uid: results.insertId,
-                name: name
-            };
-            if (err) {
-                callback(new Error('INSERT failed'), null);
-            }
-            callback(null, userInfo);
-        });
+    User.ROLE_AUTHOR = 1;
+    User.ROLE_EDITOR = 2;
+    User.ROLE_ADMIN = 7;
+
+    return User;
 };

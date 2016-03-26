@@ -1,84 +1,54 @@
 var express = require('express');
 var router = express.Router();
-
-var users = require('../models/users');
-var stories = require('../models/stories');
-
-// TODO validate input
+var models = require('../models');
+var passport = require('passport');
 
 exports.login = function(req, res) {
+    if (req.isAuthenticated()) {
+        res.redirect('/');
+    }
     res.render('login', {
         title: 'Login',
-        user: null,
-        name: '',
-        error: 200,
-        loginFailed: false,
+        message: req.flash('message'),
     });
 
     return;
 };
 
 exports.login.post = function(req, res) {
-    var name = req.body.name || '';
-    var password = req.body.password || '';
 
-    function authCallback(err, userInfo) {
-        if (err || userInfo === null) {
-            res.render('login', {
-                title: 'Login',
-                user: null,
-                name: name,
-                error: 200,
-                loginFailed: true
-            });
-            return;
-        }
-        // Login success
-        req.session.user = {
-            uid: userInfo.uid,
-            name: userInfo.name,
-        };
-        res.redirect('/');
-        return;
-    }
-
-    users.authenticate(name, password, authCallback);
 };
 
-exports.register = function (req, res) {
-    res.render('register', {
-        title: 'Register',
-        registerFailed: false
+exports.signup = function (req, res) {
+    if (req.isAuthenticated()) {
+        res.redirect('/');
+    }
+    res.render('signup', {
+        title: 'Signup',
+        message: req.flash('message'),
     });
 
     return;
 };
 
-exports.register.post = function(req, res) {
-    var name = req.body.name || '';
+exports.signup.post = function(req, res) {
+    var email = req.body.email || '';
     var password = req.body.password || '';
 
-    function registerCallback(err, userInfo) {
-        if (err || userInfo == null) {
-            res.render('register', {
-                title: 'Register',
-                registerFailed: true,
-                name: name,
-                error: 200
-            });
-            return;
+    models.User.create({
+        'email': email,
+        'password': password
+    }).then(function(user) {
+        if (user === undefined) {
+            console.error('Create user failed');
+            res.send(500);
         }
-        // Register success
-        req.session.user = {
-            uid: userInfo.uid,
-            name: userInfo.name
+        res.session.user = {
+            id: user.id,
         };
-
+        console.log(user);
         res.redirect('/');
-        return;
-    }
-
-    users.createUser(name, password, registerCallback);
+    });
 };
 
 exports.logout = function(req, res) {
@@ -88,46 +58,23 @@ exports.logout = function(req, res) {
 };
 
 exports.index = function(req, res) {
+    //console.log(req.session.passport.user);
     var length = require('../config/parameters').storyCountPerPage;
     var pageNum = Number(req.query.page) || 1;
     var skip = length * (pageNum - 1);
 
-    stories.getLatest(length + 1, skip, function(err, items) {
-        if (err) {
-            res.send(500);
-            console.log('Can not retrive stores');
-            console.log(err);
-            return;
-        }
-
-        // Create next and previous page Link
-        var nextPage = null;
-        if (items.length > length) {
-            nextPage = '/?page=' + (pageNum +1);
-            items.pop();
-        }
-        var previousPage = null;
-        if (skip > 0 ) {
-            if (pageNum == 2) {
-                previousPage = '/';
-            } else {
-                previousPage = '/?page=' + (pageNum -1);
-            }
-        }
-
-        // Render Template
-        var params = {
-            title: 'Stories',
-            page: {
-                next: nextPage,
-                previous: previousPage
-            },
-            user: req.session.user || null,
-            stories: items,
-            request: req,
-        };
-        res.render('index', params);
-    });
+    // Render Template
+    var params = {
+        title: 'Stories',
+        page: {
+            next: nextPage,
+            previous: previousPage
+        },
+        user: req.session.user || null,
+        stories: [],
+        request: req,
+    };
+    res.render('index', params);
 };
 
 exports.single = function(req, res) {
@@ -143,7 +90,7 @@ exports.single = function(req, res) {
         });
     };
 
-    stories.getBySlug(slug, callback);
+    // stories.getBySlug(slug, callback);
 };
 
 exports.create = function(req, res) {

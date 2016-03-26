@@ -1,0 +1,27 @@
+extends layout
+block content
+   .container.signup
+      h2 Please signup your account!!
+      .row
+         .span4.offset4
+            .dialog.signup
+               .contents
+                  form.well(method='POST', action='/signup')
+                     label EMAIL:
+                     input(type='text', name='email', value=email)
+                     label PASSWORD:
+                     input(type='password', name='password')
+                     label NAME:
+                     input(type='text', name='name')
+                     .control-group
+                        button.btn(type='submit', name='login') Signup
+      if message
+         .row
+            .span4.offset4
+               .alert.alert-info
+                  i.icon-exclamation-sign
+                  |  #{message}
+
+      h2 Signin by social account
+         h3: a(href='/login/facebook') Facebook
+         h3: a(href='/login/twitter') Twitter

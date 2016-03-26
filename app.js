@@ -12,6 +12,19 @@ var session = require('express-session');
 
 var MemcachedStore = require('connect-memcached')(session);
 var config = require('./config');
+var flash = require('connect-flash');
+
+// TODO call as singleton
+var models = require('./models');
+// Sync sequelize models
+models.sequelize.sync().then(function(err) {
+    if (err) {
+        throw err[0];
+    } else {
+        // DB seed
+        // Listen app
+    }
+});
 
 var app = express();
 
@@ -36,14 +49,59 @@ app.use(session({
         hosts: ['127.0.0.1:11211'],
   })
 }));
+app.use(flash());
+
+// Passport
+var passport = require('passport');
+var auth = require('./authentication');
+app.use(passport.initialize());
+app.use(passport.session());
+
+// serialize and deserialize to create or delete user passport session
+passport.serializeUser(function(user, done) {
+    console.log('serializeUser: ' + user.id);
+    done(null, user.id);
+});
+passport.deserializeUser(function(id, done) {
+    models.User.findById(id).then(function(user) {
+        done(null, user);
+    });
+});
 
 // Routing
 app.get('/', routes.index);
+app.get('/signup', routes.signup);
+app.post('/signup', passport.authenticate('signup', {
+    failureRedirect: '/signup',
+}), function(req, res) {
+    console.log('Signup success');
+    res.redirect('/');
+});
+// Social auth
+app.get('/login/facebook', passport.authenticate('facebook', function(req, res) {}));
+app.get('/login/facebook/callback', passport.authenticate('facebook', {failureRedirect: '/login'}),
+    function(req, res) {
+        console.log('Facebook login success');
+        res.redirect('/');
+    });
+app.get('/login/twitter', passport.authenticate('twitter', function(req, res) {}));
+app.get('/login/twitter/callback', passport.authenticate('twitter', {failureRedirect: '/login'}),
+    function(req, res) {
+        console.log('Twitter login success');
+        res.redirect('/');
+    });
 app.get('/login', routes.login);
-app.post('/login', routes.login.post);
-app.get('/logout', routes.logout);
-app.get('/register', routes.register);
-app.post('/register', routes.register.post);
+app.post('/login', passport.authenticate('login', {
+    failureRedirect: '/login',
+}), function(req, res) {
+    console.log('Login success');
+    res.redirect('/');
+});
+
+app.get('/logout', function(req, res) {
+    req.logout();
+    res.redirect('/login');
+});
 
 app.get('/create', routes.create);
 app.post('/create', routes.create.post);
@@ -85,4 +143,11 @@ app.use(function(err, req, res, next) {
 app.listen(3000, function() {
     console.log('Example app listen on port 3000!');
 });
+
+// passport authentication (as a middleware)
+function ensureAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) { return next(); }
+    res.redirect('/register');
+}
+
 module.exports = app;
