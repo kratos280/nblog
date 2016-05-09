@@ -32,6 +32,13 @@ Object.keys(db).forEach(function(modelName) {
   }
 });
 
+// describe relationships
+// We will move this code to each model files, if we need to set
+// indexes with foreign keys...
+db['Post'].belongsTo(db['User'], {foreignKey: 'user_id'});
+
+// Set index or do something with database at here
+
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 

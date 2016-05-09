@@ -1,0 +1,37 @@
+extends ../layout
+
+block content
+    h3 New blog
+
+    if (errors && errors.length)
+        .row
+            .span4.offset4
+                .alert.alert-info
+                    for error in errors
+                        i.icon-exclamatio
+                        != error.msg
+
+    .row
+        .contents.well.storyededitor
+            form(method='POST', action='/posts')
+                label Title
+                    input.input-block-level(type='text', name='title', placeholder='Please insert title')
+                label Slug
+                    input.input-block-level(type='text', name='slug', placeholder='Please insert slug')
+                label Body
+                    textarea.input-block-level(name='body', placeholder='Please insert body')
+                label Showing mode
+                    input(type='radio', name='mode', value='Public')
+                    | Public
+                    input(type='radio', name='mode', value='Private')
+                    | Private
+                label
+                    button.btn(type='submit', name='Submit') Create
+    if message
+        .row
+            .span4.offset4
+                .alert.alert-info
+                    i.icon-exclamation-sign
+                    |  #{message}
+
+

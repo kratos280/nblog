@@ -1,0 +1,38 @@
+extends ../layout
+
+block content
+    h3 Edit blog
+
+    if (errors && errors.length)
+        .row
+            .span4.offset4
+                .alert.alert-info
+                    for error in errors
+                        i.icon-exclamatio
+                        != error.msg
+
+    .row
+        .contents.well.storyededitor
+            form(method='POST', action='/posts/#{post.post_id}')
+                input(type='hidden', name='_method', value='PUT')
+                label Title
+                    input.input-block-level(type='text', name='title', value=((oldInput && oldInput.length > 0) ? oldInput[0].title : post.title) )
+                label Slug
+                    input.input-block-level(type='text', name='slug', value=((oldInput && oldInput.length > 0) ? oldInput[0].slug : post.slug) )
+                label Body
+                    textarea.input-block-level(name='body')= ((oldInput && oldInput.length > 0) ? oldInput[0].body : post.body)
+                label Showing mode
+                    input(type='radio', name='mode', value='Public', checked=true)
+                    | Public
+                    input(type='radio', name='mode', value='Private', checked=false)
+                    | Private
+                label
+                    button.btn(type='submit', name='Submit') Save
+    if message
+        .row
+            .span4.offset4
+                .alert.alert-info
+                    i.icon-exclamation-sign
+                    |  #{message}
+
+

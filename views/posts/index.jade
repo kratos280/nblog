@@ -1,0 +1,14 @@
+extends ../layout
+
+block content
+    h3 All posts
+    if message
+        .row
+            .span4.offset4
+                .alert.alert-info
+                    i.icon-exclamation-sign
+                    |  #{message}
+
+    .stories
+        each post in posts
+            p: a(href='/posts/'+ post.post_id) #{post.title}

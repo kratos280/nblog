@@ -1,0 +1,18 @@
+extends ../layout
+
+block content
+    h3 #{post.title}
+    h4: a(href='/users/'+post.User.user_id) #{post.User.name}
+
+    .row
+        .contents.well.storyededitor
+                textarea #{post.body}
+
+    if (user && post.User.user_id === user.user_id )
+        a(href='/posts/#{post.post_id}/edit') Edit
+        form(action='/posts/#{post.post_id}', method='post', enctype='application/x-www-form-urlencoded')
+            input(type='hidden',value='DELETE',name='_method')
+            button(type='submit').
+                Delete
+
+

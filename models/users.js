@@ -2,7 +2,7 @@ var crypto = require('crypto');
 
 module.exports = function (sequelize, DataTypes) {
     var User = sequelize.define('User', {
-        id: {
+        user_id: {
             type: DataTypes.BIGINT.UNSIGNED,
             autoIncrement: true,
             primaryKey: true,
@@ -28,6 +28,9 @@ module.exports = function (sequelize, DataTypes) {
         email: {
             type: DataTypes.STRING,
             allowNull: true,
+            validate: {
+                isEmail: true,
+            }
         },
         password: {
             type: DataTypes.STRING,

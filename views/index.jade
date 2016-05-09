@@ -1,17 +1,20 @@
 extends layout
 
 block content
-  .stories
-    each story in stories
-      include common/story
-  .pagination
-    ul
-      if page.previous
-        li: a(href=page.previous) Prev
-      else
-        li.disabled: a Prev
-      if page.next
-        li: a(href=page.next) Next
-      else
-        li.disabled: a Next
+    input#message(type='text')
+    button#submit Send
+    div#board
+
+    script(type='text/javascript').
+        var socket = io();
+        $('#submit').on('click', (function() {
+            socket.emit('msg', $('#message').val());
+            $('#message').val('');
+            return false;
+        }));
+        socket.on('msg', function(data) {
+            $('#board').append(data + '<br>');
+        });
+
+
 

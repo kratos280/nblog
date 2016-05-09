@@ -6,7 +6,6 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var http = require('http');
 
-var routes = require('./routes/index');
 var users = require('./routes/users');
 var session = require('express-session');
 
@@ -27,6 +26,8 @@ models.sequelize.sync().then(function(err) {
 });
 
 var app = express();
+var expressValidator = require('express-validator');
+var methodOverride = require('method-override');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -37,7 +38,16 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(expressValidator([]));
 app.use(cookieParser(config.cookieHash));
+app.use(methodOverride(function(req, res){
+    if (req.body && typeof req.body === 'object' && '_method' in req.body) {
+        // look in urlencoded POST bodies and delete it
+        var method = req.body._method
+        delete req.body._method
+        return method
+    }
+}));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
     secret: 'nblog',
@@ -59,8 +69,8 @@ app.use(passport.session());
 
 // serialize and deserialize to create or delete user passport session
 passport.serializeUser(function(user, done) {
-    console.log('serializeUser: ' + user.id);
-    done(null, user.id);
+    console.log('serializeUser: ' + user.user_id);
+    done(null, user.user_id);
 });
 passport.deserializeUser(function(id, done) {
     models.User.findById(id).then(function(user) {
@@ -69,6 +79,7 @@ passport.deserializeUser(function(id, done) {
 });
 
 // Routing
+var routes = require('./routes/index');
 app.get('/', routes.index);
 app.get('/signup', routes.signup);
 app.post('/signup', passport.authenticate('signup', {
@@ -103,11 +114,8 @@ app.get('/logout', function(req, res) {
     res.redirect('/login');
 });
 
-app.get('/create', routes.create);
-app.post('/create', routes.create.post);
-app.get('/:slug', routes.single);
-//app.use('/', routes);
-//app.use('/users', users);
+var postRoutes = require('./routes/posts');
+app.use('/posts', postRoutes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -140,8 +148,17 @@ app.use(function(err, req, res, next) {
   });
 });
 
-app.listen(3000, function() {
+var server = app.listen(3000, function() {
     console.log('Example app listen on port 3000!');
+});
+
+// Socket
+var io = require('socket.io').listen(server);
+io.on('connection', function(socket) {
+    console.log('a user connected');
+    socket.on('msg', function(data) {
+        io.emit('msg', data);
+    });
 });
 
 // passport authentication (as a middleware)

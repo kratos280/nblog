@@ -44,7 +44,7 @@ exports.signup.post = function(req, res) {
             res.send(500);
         }
         res.session.user = {
-            id: user.id,
+            user_id: user.user_id,
         };
         console.log(user);
         res.redirect('/');
@@ -58,23 +58,7 @@ exports.logout = function(req, res) {
 };
 
 exports.index = function(req, res) {
-    //console.log(req.session.passport.user);
-    var length = require('../config/parameters').storyCountPerPage;
-    var pageNum = Number(req.query.page) || 1;
-    var skip = length * (pageNum - 1);
-
-    // Render Template
-    var params = {
-        title: 'Stories',
-        page: {
-            next: nextPage,
-            previous: previousPage
-        },
-        user: req.session.user || null,
-        stories: [],
-        request: req,
-    };
-    res.render('index', params);
+    res.render('index', {});
 };
 
 exports.single = function(req, res) {
